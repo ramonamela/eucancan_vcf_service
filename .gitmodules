@@ -1,0 +1,6 @@
+[submodule "SnpEff"]
+	path = SnpEff
+	url = https://github.com/pcingola/SnpEff.git
+[submodule "SnpSift"]
+	path = SnpSift
+	url = https://github.com/pcingola/SnpSift
