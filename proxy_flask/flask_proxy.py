@@ -19,7 +19,6 @@ def joke():
 
 @app.route('/<path:path>',methods=['GET','POST','DELETE'])
 def proxy(path):
-    """
     if request.method=='GET':
         resp = requests.get("%s%s" % (SITE_NAME, path))
         excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
@@ -27,20 +26,30 @@ def proxy(path):
         response = Response(resp.content, resp.status_code, headers)
         return response
     elif request.method=='POST':
-        resp = requests.post("%s%s" % (SITE_NAME, path),json=request.get_json())
+        ## THIS STEP IS SPECIFIC FOR THIS APPLICATION. TO DO IT IN A GENERAL WAY, ITERATE THROUGH THE FILES
+        try:
+            f = request.files["vcf_file"]
+        except Exception:
+            return "vcf file not found\n", 422
+
+        file_to_forward = {"vcf_file": (f.filename, f.stream, f.mimetype)}
+        resp = requests.post("%s%s" % (SITE_NAME, path),
+                             files=file_to_forward)
+
         excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
         headers = [(name, value) for (name, value) in resp.raw.headers.items() if name.lower() not in excluded_headers]
         response = Response(resp.content, resp.status_code, headers)
         return response
     elif request.method=='DELETE':
-        resp = requests.delete("%s%s" % (SITE_NAME, path)).content
+        resp = requests.delete("%s%s" % (SITE_NAME, path))
         excluded_headers = ['content-encoding', 'content-length',
                             'transfer-encoding', 'connection']
         headers = [(name, value) for (name, value) in resp.raw.headers.items()
                    if name.lower() not in excluded_headers]
         response = Response(resp.content, resp.status_code, headers)
         return response
-    """
+
+    #print(request)
     resp = requests.request(
         method=request.method,
         url=request.url.replace(SITE_NAME, "%s:%s" % (service_address, service_port)),
@@ -48,6 +57,10 @@ def proxy(path):
         data=request.get_data(),
         cookies=request.cookies,
         allow_redirects=False)
+
+    #        files=request.files,
+
+
 
     excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
     headers = [(name, value) for (name, value) in resp.raw.headers.items()
@@ -62,10 +75,13 @@ def proxy(path):
 ## https://stackoverflow.com/questions/32237379/python-flask-redirect-to-https-from-http
 @app.before_request
 def before_request():
+    pass
+    """
     if not request.is_secure and app.env != "development":
         url = request.url.replace("http://", "https://", 1)
         code = 301
         return redirect(url, code=code)
+    """
 
 if __name__ == '__main__':
 
@@ -82,7 +98,7 @@ if __name__ == '__main__':
     parser.add_argument('-ip', '--input_port',
                         help='Port number to listen to',
                         dest='input_port',
-                        default=443,
+                        default=5000,
                         type=int,
                         choices=range(0, 65536),
                         metavar="{0..65535}")
@@ -101,6 +117,13 @@ if __name__ == '__main__':
                         default="10.32.3.2",
                         type=str)
 
-    parser.parse_args()
+    args = parser.parse_args()
 
-    app.run(debug = False,port=input_port)
+    input_port = args.input_port
+    service_port = args.service_port
+    service_address = args.service_address
+
+    SITE_NAME = "http://%s:%s/" % (service_address, service_port)
+
+    app.env = "development"
+    app.run(debug = False,host="0.0.0.0",port=input_port)
