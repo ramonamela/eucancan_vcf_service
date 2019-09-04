@@ -20,8 +20,8 @@ def upload_file(filename=None):
         return "Malformed or empty file name\n", 422
     full_path = "{}{}".format(vcf_folder, secure_name)
     # Verify extension
-    if not secure_name.lower().endsWith(".vcf.gz"):
-        return "Unsupported file extension", 415
+    if not secure_name.lower().endswith(".vcf.gz"):
+        return "Unsupported file extension\n", 415
 
     full_path = "{}{}".format(vcf_folder, secure_name)
     # File already exists
