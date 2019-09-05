@@ -1,4 +1,4 @@
-from flask import Flask, request, Response
+from flask import Flask, request, Response, send_from_directory, abort
 from werkzeug.utils import secure_filename
 from os.path import exists
 from os import remove
@@ -8,8 +8,8 @@ app = Flask(__name__)
 vcf_folder = "/mnt/nfs/stored_vcfs/"
 
 
-@app.route("/files/", methods=["POST","DELETE"])
-@app.route("/files/<filename>", methods=["POST","DELETE"])
+@app.route("/files/", methods=["POST"])
+@app.route("/files/<filename>", methods=["GET","POST","DELETE"])
 def vcf_annotation(filename=None):
     secure_name = secure_filename(filename)
     if request.method == "POST":
@@ -46,9 +46,12 @@ def vcf_annotation(filename=None):
             remove(full_path)
             return Response(status=200)
         return Response(status=500)
-
-
-
+    elif request.method == "GET":
+        try:
+            return send_from_directory(vcf_folder,
+                                       filename=filename, as_attachment=False)
+        except FileNotFoundError:
+            abort(404)
 
 if __name__ == '__main__':
     app.env="development"

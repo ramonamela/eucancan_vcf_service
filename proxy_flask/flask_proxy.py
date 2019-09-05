@@ -123,7 +123,7 @@ if __name__ == '__main__':
     service_port = args.service_port
     service_address = args.service_address
 
-    SITE_NAME = "http://%s:%s/" % (service_address, service_port)
+    SITE_NAME = "https://%s:%s/" % (service_address, service_port)
 
     app.env = "development"
     app.run(debug = False,host="0.0.0.0",port=input_port)
