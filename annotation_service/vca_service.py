@@ -2,6 +2,7 @@ from flask import Flask, request, Response, send_from_directory, abort
 from werkzeug.utils import secure_filename
 from os.path import exists
 from os import remove
+from json import loads
 
 app = Flask(__name__)
 
@@ -9,19 +10,26 @@ vcf_folder = "/mnt/nfs/stored_vcfs/"
 
 
 @app.route("/files/", methods=["POST"])
+def vcf_annotation_bridge():
+    try:
+        f = request.files["vcf_file"]
+    except KeyError:
+        return "vcf file not found\n", 400
+    return vcf_annotation(f.filename)
+
 @app.route("/files/<filename>", methods=["GET","POST","DELETE"])
-def vcf_annotation(filename=None):
+def vcf_annotation(filename):
     secure_name = secure_filename(filename)
     if request.method == "POST":
-        f = request.files["vcf_file"]
-
-        if filename is None:
-            filename = f.filename
+        try:
+            f = request.files["vcf_file"]
+        except KeyError:
+            return "vcf file not found\n", 400
 
         # Empty filename
         if not secure_name:
             return "Malformed or empty file name\n", 422
-        full_path = "{}{}".format(vcf_folder, secure_name)
+
         # Verify extension
         if not secure_name.lower().endswith(".vcf.gz"):
             return "Unsupported file extension\n", 415
@@ -52,6 +60,10 @@ def vcf_annotation(filename=None):
                                        filename=filename, as_attachment=False)
         except FileNotFoundError:
             abort(404)
+    elif request.method == "PUT":
+        trans_props = loads(request.data)
+        print(trans_props)
+
 
 if __name__ == '__main__':
     app.env="development"

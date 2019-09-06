@@ -17,7 +17,7 @@ service_address = None
 def joke():
     return 'Flask is running as internal proxy!'
 
-@app.route('/<path:path>',methods=['GET','POST','DELETE'])
+@app.route('/<path:path>',methods=['PUT','GET','POST','DELETE'])
 def proxy(path):
     if request.method=='GET':
         resp = requests.get("%s%s" % (SITE_NAME, path))
@@ -48,7 +48,16 @@ def proxy(path):
                    if name.lower() not in excluded_headers]
         response = Response(resp.content, resp.status_code, headers)
         return response
-
+    elif request.method=='PUT':
+        resp = request.put("%s%s" % (SITE_NAME, path), data=request.data)
+        excluded_headers = ['content-encoding', 'content-length',
+                            'transfer-encoding', 'connection']
+        headers = [(name, value) for (name, value) in resp.raw.headers.items()
+                   if name.lower() not in excluded_headers]
+        response = Response(resp.content, resp.status_code, headers)
+        return response
+    return Response(status=500)
+    """
     #print(request)
     resp = requests.request(
         method=request.method,
@@ -68,7 +77,7 @@ def proxy(path):
 
     response = Response(resp.content, resp.status_code, headers)
     return response
-
+    """
 
 
 
@@ -123,7 +132,7 @@ if __name__ == '__main__':
     service_port = args.service_port
     service_address = args.service_address
 
-    SITE_NAME = "https://%s:%s/" % (service_address, service_port)
+    SITE_NAME = "http://%s:%s/" % (service_address, service_port)
 
     app.env = "development"
     app.run(debug = False,host="0.0.0.0",port=input_port)
