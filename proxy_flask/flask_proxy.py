@@ -49,12 +49,14 @@ def proxy(path):
         response = Response(resp.content, resp.status_code, headers)
         return response
     elif request.method=='PUT':
-        resp = request.put("%s%s" % (SITE_NAME, path), data=request.data)
+        resp = requests.put("%s%s" % (SITE_NAME, path), data=request.data)
         excluded_headers = ['content-encoding', 'content-length',
                             'transfer-encoding', 'connection']
         headers = [(name, value) for (name, value) in resp.raw.headers.items()
                    if name.lower() not in excluded_headers]
         response = Response(resp.content, resp.status_code, headers)
+        import sys
+        print("Returning forwarded response", file=sys.stderr)
         return response
     return Response(status=500)
     """

@@ -23,10 +23,12 @@ def temp_annotate(file_1, file_2):
     p = subprocess.Popen(['bash', '-c', command_string])
     p.wait()
 
-@app.route("/files/<filename>", methods=["GET","POST","DELETE"])
+@app.route("/files/<filename>", methods=["GET", "PUT", "POST","DELETE"])
 def vcf_annotation(filename):
     secure_name = secure_filename(filename)
     if request.method == "PUT":
+        import sys
+        print("Entering put", files=sys.stderr)
         try:
             f = request.files["new_vcf_file"]
         except KeyError:
