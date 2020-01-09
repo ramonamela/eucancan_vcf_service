@@ -25,12 +25,11 @@ def temp_annotate(file_1, file_2):
 
 @app.route("/files/<filename>", methods=["GET", "PUT", "POST","DELETE"])
 def vcf_annotation(filename):
+    import sys
     secure_name = secure_filename(filename)
     if request.method == "PUT":
-        import sys
-        print("Entering put", files=sys.stderr)
         try:
-            f = request.files["new_vcf_file"]
+            f = request.files["vcf_file"]
         except KeyError:
             return "vcf file not found\n", 400
 
@@ -40,6 +39,7 @@ def vcf_annotation(filename):
 
         # Verify extension
         if not secure_name.lower().endswith(".vcf.gz"):
+            import sys
             return "Unsupported file extension\n", 415
 
         full_path = "{}{}".format(vcf_folder, secure_name)
@@ -57,7 +57,6 @@ def vcf_annotation(filename):
         if filename is None or not secure_name:
             return "Malformed or empty file name\n", 422
         full_path = "{}{}".format(vcf_folder, secure_name)
-        print("Try to delete {}".format(full_path))
         if exists(full_path):
             remove(full_path)
             return Response(status=200)
@@ -68,6 +67,8 @@ def vcf_annotation(filename):
                                        filename=filename, as_attachment=False)
         except FileNotFoundError:
             abort(404)
+    elif request.method == "POST":
+        return Response(status=500)
     """
     elif request.method == "PUT":
         trans_props = loads(request.data)

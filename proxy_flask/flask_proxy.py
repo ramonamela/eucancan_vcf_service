@@ -19,6 +19,7 @@ def joke():
 
 @app.route('/<path:path>',methods=['PUT','GET','POST','DELETE'])
 def proxy(path):
+    import sys
     if request.method=='GET':
         resp = requests.get("%s%s" % (SITE_NAME, path))
         excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
@@ -49,14 +50,15 @@ def proxy(path):
         response = Response(resp.content, resp.status_code, headers)
         return response
     elif request.method=='PUT':
-        resp = requests.put("%s%s" % (SITE_NAME, path), data=request.data)
+        file_to_forward = {}
+        for key in list(request.files.keys()):
+            file_to_forward[key] = request.files[key]
+        resp = requests.put("%s%s" % (SITE_NAME, path), data=request.data, files=file_to_forward)
         excluded_headers = ['content-encoding', 'content-length',
                             'transfer-encoding', 'connection']
         headers = [(name, value) for (name, value) in resp.raw.headers.items()
                    if name.lower() not in excluded_headers]
         response = Response(resp.content, resp.status_code, headers)
-        import sys
-        print("Returning forwarded response", file=sys.stderr)
         return response
     return Response(status=500)
     """
